@@ -7,3 +7,5 @@
 (define version "0.0")
 
 (define pkg-authors '(ayman))
+
+(define test-omit-paths (list "ansi/format/examples"))
