@@ -9,8 +9,7 @@
   (syntax-parse stx
     [(_ id:id
         code:integer
-        (~optional (~seq #:cancel canceler))
-        (~optional (~seq #:alias alias)))
+        (~optional (~seq #:cancel canceler)))
      (define/with-syntax escape-sequence (format "\e[~am" (syntax-e #'code)))
      (define/with-syntax id-proc (format-id #'here "~a" #'id))
      #'(begin
@@ -20,56 +19,40 @@
              ((s)
               (string-append escape-sequence s (~? canceler)))))
 
-         (define-for-syntax stx-transformer
+         (define-syntax id
            (lambda (stx)
              (syntax-case stx ()
                [(id v (... ...))
                 #'(id-proc v (... ...))]
                [id
-                #'escape-sequence])))
+                #'escape-sequence]))))]))
 
-         (define-syntax id stx-transformer)
-         (~? (define-syntax alias stx-transformer)))]))
-
-(define-syntax (define-foreground stx)
-  (syntax-parse stx
-    [(_ id:id code:integer foreground-default)
-     (define/with-syntax foreground-id (format-id #'id "foreground-~a" #'id))
-     #'(define-modifier foreground-id code #:cancel foreground-default #:alias id)]))
-
-(define-syntax (define-background stx)
-  (syntax-parse stx
-    [(_ id:id code:integer background-default)
-     (define/with-syntax background-id (format-id #'id "background-~a" #'id))
-     #'(define-modifier background-id code #:cancel background-default)]))
-
-(define-for-syntax (define-color stx)
-  (syntax-parse stx
-    [(_ id:id code:integer)
-     (define/with-syntax normal-foreground (+ 30 (syntax-e #'code)))
-     (define/with-syntax bright-foreground (+ 90 (syntax-e #'code)))
-     (define/with-syntax normal-background (+ 40 (syntax-e #'code)))
-     (define/with-syntax bright-background (+ 100 (syntax-e #'code)))
-
-     (define/with-syntax bright-id (format-id #'id "bright-~a" #'id))
-
-     (define/with-syntax foreground-default (format-id #'id "foreground-default"))
-     (define/with-syntax background-default (format-id #'id "background-default"))
-
-     #'(begin
-         (define-foreground id normal-foreground foreground-default)
-         (define-foreground bright-id bright-foreground foreground-default)
-         (define-background id normal-background background-default)
-         (define-background bright-id bright-background background-default))]))
 
 (define-syntax (define-color-definer stx)
   (syntax-parse stx
-    [(_ definer:id foreground-default-code:integer background-default-code:integer)
-     (define/with-syntax foreground-default (format-id #'definer "foreground-default"))
-     (define/with-syntax background-default (format-id #'definer "background-default"))
+    [(_ definer:id foreground-default background-default)
      #'(begin
-         (define-modifier foreground-default foreground-default-code)
-         (define-modifier background-default background-default-code)
+         (define-for-syntax (define-color stx)
+           (syntax-parse stx
+             [(_ id:id code:integer)
+              (define/with-syntax normal-foreground (+ 30 (syntax-e #'code)))
+              (define/with-syntax bright-foreground (+ 90 (syntax-e #'code)))
+              (define/with-syntax normal-background (+ 40 (syntax-e #'code)))
+              (define/with-syntax bright-background (+ 100 (syntax-e #'code)))
+
+              (define/with-syntax bright (format-id #'id "bright-~a" #'id))
+              (define/with-syntax foreground-color (format-id #'id "foreground-~a" #'id))
+              (define/with-syntax foreground-bright-color (format-id #'id "foreground-bright-~a" #'id))
+              (define/with-syntax background-color (format-id #'id "background-~a" #'id))
+              (define/with-syntax background-bright-color (format-id #'id "background-bright-~a" #'id))
+
+              #'(begin
+                  (define-modifier foreground-color normal-foreground #:cancel foreground-default)
+                  (define-syntax id (make-rename-transformer #'foreground-color))
+                  (define-modifier foreground-bright-color bright-foreground #:cancel foreground-default)
+                  (define-syntax bright (make-rename-transformer #'foreground-bright-color))
+                  (define-modifier background-color normal-background #:cancel background-default)
+                  (define-modifier background-bright-color bright-background #:cancel background-default))]))
 
          (define-syntax (definer stx)
            (define-color stx)))]))

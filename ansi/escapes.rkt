@@ -6,22 +6,28 @@
 
 ;; MODIFIERS
 
-(define-modifier normal-intensity 22)
 (define-modifier reset 0)
 (define-modifier bold 1 #:cancel normal-intensity)
 (define-modifier dim 2 #:cancel normal-intensity)
+(define-modifier normal-intensity 22)
 (define-modifier italic 3 #:cancel not-italicized)
 (define-modifier not-italicized 23)
 (define-modifier underline 4 #:cancel not-underlined)
 (define-modifier not-underlined 24)
-(define-modifier negative-image 7 #:cancel positive-image #:alias inverse)
+(define-modifier negative-image 7 #:cancel positive-image)
 (define-modifier positive-image 27)
-(define-modifier crossed-out 9 #:cancel not-crossed-out #:alias strikethrough)
+(define-modifier crossed-out 9 #:cancel not-crossed-out)
 (define-modifier not-crossed-out 29)
+
+(define-syntax inverse (make-rename-transformer #'negative-image))
+(define-syntax strikethrough (make-rename-transformer #'crossed-out))
 
 ;; COLORS
 
-(define-color-definer define-color 39 49)
+(define-modifier foreground-default 39)
+(define-modifier background-default 49)
+
+(define-color-definer define-color foreground-default background-default)
 
 (define-color black 0)
 (define-color red 1)

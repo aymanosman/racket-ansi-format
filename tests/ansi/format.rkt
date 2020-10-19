@@ -15,3 +15,9 @@
 
 (check-ansi (display-ansi bold "hello" normal-intensity " world")
             (display-ansi (bold "hello") " world"))
+
+(check-equal? (~ansi (strikethrough "foo"))
+              (~ansi (crossed-out "foo")))
+
+(check-equal? (~ansi (inverse "foo"))
+              (~ansi (negative-image "foo")))
